@@ -1,0 +1,36 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI(title="LedgerGuard AI")
+
+class Transaction(BaseModel):
+    amount: float
+    description: str = ""
+    sender: str = ""
+
+@app.get("/")
+def home():
+    return {"status": "live", "message": "LedgerGuard AI is running - Benin Edition"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.post("/detect-fraud")
+def detect_fraud(tx: Transaction):
+    risk_score = 0
+    flags = []
+    if tx.amount > 500000:
+        risk_score += 70
+        flags.append("High amount")
+    if "urgent" in tx.description.lower() or "crypto" in tx.description.lower():
+        risk_score += 30
+        flags.append("Suspicious keyword")
+    status = "FRAUD SUSPECTED" if risk_score >= 70 else "SAFE"
+    return {
+        "amount": tx.amount,
+        "risk_score": risk_score,
+        "status": status,
+        "flags": flags,
+        "advice": "Verify sender" if status == "FRAUD SUSPECTED" else "Normal transaction"
+    }
